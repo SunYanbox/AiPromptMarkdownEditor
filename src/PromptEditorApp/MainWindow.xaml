@@ -1,0 +1,299 @@
+<Window x:Class="PromptEditor.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        Title="AI 提示词 Markdown 编辑器"
+        Width="1280" Height="800"
+        AllowDrop="True"
+        Background="{DynamicResource Window.Background}"
+        TextElement.Foreground="{DynamicResource Text.Primary}">
+    <Window.InputBindings>
+        <KeyBinding Modifiers="Control" Key="N" Command="{Binding NewTabCommand}"/>
+        <KeyBinding Modifiers="Control" Key="O" Command="{Binding OpenCommand}"/>
+        <KeyBinding Modifiers="Control" Key="S" Command="{Binding SaveCommand}"/>
+        <KeyBinding Modifiers="Control" Key="W" Command="{Binding CloseTabCommand}"/>
+        <KeyBinding Modifiers="Control+Shift" Key="T" Command="{Binding ReopenClosedTabCommand}"/>
+        <KeyBinding Modifiers="Control" Key="Tab" Command="{Binding NextTabCommand}"/>
+        <KeyBinding Modifiers="Control+Shift" Key="Tab" Command="{Binding PrevTabCommand}"/>
+        <KeyBinding Modifiers="Control" Key="F" Command="{Binding FindCommand}"/>
+        <KeyBinding Modifiers="Control" Key="H" Command="{Binding ReplaceCommand}"/>
+        <KeyBinding Modifiers="Control" Key="G" Command="{Binding GotoLineCommand}"/>
+        <KeyBinding Modifiers="Control" Key="P" Command="{Binding QuickJumpCommand}"/>
+        <KeyBinding Modifiers="Control" Key="M" Command="{Binding ToggleFoldCommand}"/>
+        <KeyBinding Modifiers="Control" Key="D0" Command="{Binding ResetZoomCommand}"/>
+        <KeyBinding Modifiers="Control" Key="B" Command="{Binding BoldCommand}"/>
+        <KeyBinding Modifiers="Control" Key="D1" Command="{Binding Heading1Command}"/>
+        <KeyBinding Modifiers="Control" Key="D2" Command="{Binding Heading2Command}"/>
+        <KeyBinding Modifiers="Control" Key="D3" Command="{Binding Heading3Command}"/>
+        <KeyBinding Modifiers="Control" Key="D4" Command="{Binding Heading4Command}"/>
+        <KeyBinding Modifiers="Control" Key="D5" Command="{Binding Heading5Command}"/>
+        <KeyBinding Modifiers="Control" Key="D6" Command="{Binding Heading6Command}"/>
+    </Window.InputBindings>
+
+    <DockPanel>
+        <!-- ===== 顶部：菜单 + 工具栏 ===== -->
+        <StackPanel DockPanel.Dock="Top">
+            <Menu Background="{DynamicResource Panel.Background}" Foreground="{DynamicResource Text.Primary}">
+                <MenuItem Header="文件(_F)">
+                    <MenuItem Header="新建标签  Ctrl+N" Command="{Binding NewTabCommand}"/>
+                    <MenuItem Header="打开…  Ctrl+O" Command="{Binding OpenCommand}"/>
+                    <MenuItem Header="保存  Ctrl+S" Command="{Binding SaveCommand}"/>
+                    <MenuItem Header="另存为…  Ctrl+Shift+S" Command="{Binding SaveAsCommand}"/>
+                    <MenuItem Header="全部保存" Command="{Binding SaveAllCommand}"/>
+                    <Separator/>
+                    <MenuItem Header="重新打开关闭的标签  Ctrl+Shift+T" Command="{Binding ReopenClosedTabCommand}"/>
+                    <MenuItem Header="最近文件(_R)" ItemsSource="{Binding RecentFileCommands}">
+                        <MenuItem.ItemContainerStyle>
+                            <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+                                <Setter Property="Header" Value="{Binding Header}"/>
+                                <Setter Property="Command" Value="{Binding}"/>
+                            </Style>
+                        </MenuItem.ItemContainerStyle>
+                    </MenuItem>
+                    <Separator/>
+                    <MenuItem Header="退出  Alt+F4" Click="OnExitClick"/>
+                </MenuItem>
+                <MenuItem Header="编辑(_E)">
+                    <MenuItem Header="撤销  Ctrl+Z" Command="{Binding UndoCommand}"/>
+                    <MenuItem Header="重做  Ctrl+Y" Command="{Binding RedoCommand}"/>
+                    <Separator/>
+                    <MenuItem Header="查找  Ctrl+F" Command="{Binding FindCommand}"/>
+                    <MenuItem Header="替换  Ctrl+H" Command="{Binding ReplaceCommand}"/>
+                    <Separator/>
+                    <MenuItem Header="转到指定行  Ctrl+G" Command="{Binding GotoLineCommand}"/>
+                    <MenuItem Header="快速跳转  Ctrl+P" Command="{Binding QuickJumpCommand}"/>
+                </MenuItem>
+                <MenuItem Header="视图(_V)">
+                    <MenuItem Header="大纲面板" Command="{Binding ToggleOutlineCommand}"/>
+                    <Separator/>
+                    <MenuItem Header="全部折叠" Command="{Binding FoldAllCommand}"/>
+                    <MenuItem Header="全部展开" Command="{Binding UnfoldAllCommand}"/>
+                    <Separator/>
+                    <MenuItem Header="重置缩放  Ctrl+0" Command="{Binding ResetZoomCommand}"/>
+                </MenuItem>
+                <MenuItem Header="工具(_T)">
+                    <MenuItem Header="标签库管理…" Command="{Binding TagLibraryCommand}"/>
+                    <MenuItem Header="设置…" Command="{Binding SettingsCommand}"/>
+                </MenuItem>
+            </Menu>
+            <ToolBarTray Background="{DynamicResource Panel.BackgroundAlt}">
+                <ToolBar Background="Transparent" BorderBrush="Transparent">
+                    <ToolBar.Resources>
+                    <Style TargetType="Separator">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Separator">
+                                    <Rectangle Width="1" Margin="4,2" VerticalAlignment="Stretch"
+                                               Fill="{DynamicResource Border.Color}"/>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ToolBar.Resources>
+                <Button Content="新建" Command="{Binding NewTabCommand}"/>
+                    <Button Content="打开" Command="{Binding OpenCommand}"/>
+                    <Button Content="保存" Command="{Binding SaveCommand}"/>
+                    <Separator/>
+                    <Button Content="撤销" Command="{Binding UndoCommand}"/>
+                    <Button Content="重做" Command="{Binding RedoCommand}"/>
+                    <Separator/>
+                    <Button Content="查找" Command="{Binding FindCommand}"/>
+                    <Separator/>
+                    <Button Content="加粗" Command="{Binding BoldCommand}" ToolTip="加粗 **文字**  Ctrl+B"/>
+                    <Button Content="斜体" Command="{Binding ItalicCommand}" ToolTip="斜体 *文字*  Ctrl+I"/>
+                    <Button Content="标题 ▾" Click="OnHeadingMenuClick" ToolTip="设置标题级别 H1~H6"/>
+                    <Button Content="列表 ▾" Click="OnListMenuClick" ToolTip="无序/有序列表、引用"/>
+                    <Button Content="行内代码" Command="{Binding InlineCodeCommand}" ToolTip="行内代码 `代码`"/>
+                    <Button Content="代码块" Command="{Binding CodeBlockCommand}" ToolTip="``` 代码块"/>
+                    <Separator/>
+                    <TextBlock Text="标签:" VerticalAlignment="Center" Margin="4,0"/>
+                    <ComboBox x:Name="QuickTagCombo" Width="170"
+                              ItemsSource="{Binding QuickTags}"
+                              DisplayMemberPath="Name"
+                              SelectionChanged="OnQuickTagSelected"/>
+                    <Button Content="更多标签…" Command="{Binding TagPickerCommand}"/>
+                    <Separator/>
+                    <Button Content="表格" Click="OnTableButton"/>
+                    <Separator/>
+                    <Button Content="全部折叠" Command="{Binding FoldAllCommand}"/>
+                    <Button Content="全部展开" Command="{Binding UnfoldAllCommand}"/>
+                    <Separator/>
+                    <ToggleButton IsChecked="{Binding EolMarkersEnabled, Mode=OneWay}" Click="OnEolMarkersToggle"
+                                  Content="行尾符号" ToolTip="显示/隐藏行尾标记（^M$ / $）"/>
+                    <Button Content="统一为 LF" Command="{Binding UnifyLfCommand}"/>
+                    <Button Content="统一为 CRLF" Command="{Binding UnifyCrlfCommand}"/>
+                    <Separator/>
+                    <Button Content="设置" Command="{Binding SettingsCommand}"/>
+                </ToolBar>
+            </ToolBarTray>
+        </StackPanel>
+
+        <!-- ===== 左侧：大纲面板 ===== -->
+        <Border DockPanel.Dock="Left" x:Name="OutlinePanel"
+                Width="230" Background="{DynamicResource Panel.Background}"
+                BorderBrush="{DynamicResource Border.Color}" BorderThickness="0,0,1,0">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top" Text="大纲" FontWeight="Bold" Margin="8,6"/>
+                <ListBox x:Name="OutlineList"
+                         ItemsSource="{Binding OutlineItems}"
+                         BorderThickness="0"
+                         Background="Transparent"
+                         HorizontalContentAlignment="Stretch"
+                         MouseDoubleClick="OnOutlineDoubleClick">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Display}" TextTrimming="CharacterEllipsis"
+                                       Margin="{Binding IndentMargin}"/>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+        </Border>
+
+        <!-- ===== 底部：状态栏 ===== -->
+        <StatusBar DockPanel.Dock="Bottom" Background="{DynamicResource StatusBar.Background}"
+                   Foreground="{DynamicResource StatusBar.Foreground}">
+            <StatusBarItem>
+                <TextBlock Text="{Binding StatusMessage}" FontWeight="Bold">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="White"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsStatusMessageVisible}" Value="False">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding IsStatusMessageError}" Value="True">
+                                    <Setter Property="Foreground" Value="#FFD6D6"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock Text="{Binding StatusCaret}"/>
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock Text="{Binding StatusSelection}"/>
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock Text="{Binding StatusCounts}"/>
+            </StatusBarItem>
+            <StatusBarItem>
+                <Button Command="{Binding JumpToFirstMixedEolCommand}"
+                        Content="{Binding EolDisplay}"
+                        Background="Transparent" Foreground="White" BorderThickness="0"
+                        Cursor="Hand" ToolTip="存在混合行尾时点击定位首个混合处"/>
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock Text="{Binding StatusEncoding}"/>
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock Text="{Binding StatusTokens}"/>
+            </StatusBarItem>
+            <StatusBarItem HorizontalAlignment="Right" HorizontalContentAlignment="Right">
+                <TextBlock Text="{Binding StatusTagError}" Foreground="{DynamicResource Warning}"/>
+            </StatusBarItem>
+        </StatusBar>
+
+        <!-- ===== 中央：标签栏 + 编辑区 ===== -->
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- 标签栏 -->
+            <Border Grid.Row="0" Background="{DynamicResource TabBar.Background}">
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="▾" Width="24" Click="OnTabOverflowClick"
+                            ToolTip="标签列表"/>
+                    <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
+                        <ListBox x:Name="TabList"
+                                 ItemsSource="{Binding Tabs}"
+                                 SelectedItem="{Binding ActiveDocument, Mode=TwoWay}"
+                                 Background="Transparent" BorderThickness="0"
+                                 HorizontalContentAlignment="Stretch"
+                                 SelectionMode="Single"
+                                 AllowDrop="True"
+                                 PreviewMouseDown="OnTabPreviewMouseDown"
+                                 MouseMove="OnTabMouseMove"
+                                 Drop="OnTabDrop"
+                                 DragOver="OnTabDragOver">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal"/>
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Padding" Value="8,4"/>
+                                    <Setter Property="Margin" Value="1,2"/>
+                                    <Setter Property="MaxWidth" Value="260"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ListBoxItem">
+                                                <Border x:Name="Bd" Background="Transparent"
+                                                        BorderBrush="{DynamicResource Border.Color}" BorderThickness="0,0,1,0"
+                                                        Padding="{TemplateBinding Padding}">
+                                                    <DockPanel ToolTip="{Binding TooltipText}">
+                                                        <Button DockPanel.Dock="Right" Content="✕" BorderThickness="0"
+                                                                Background="Transparent" Width="18" Height="18"
+                                                                Click="OnTabCloseClick" Tag="{Binding}"/>
+                                                        <TextBlock Text="{Binding DisplayTitleWithSuffix}"
+                                                                   TextTrimming="CharacterEllipsis"/>
+                                                    </DockPanel>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsSelected" Value="True">
+                                                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Item.Selected}"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Item.Hover}"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                        </ListBox>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+
+            <!-- 查找/替换条 -->
+            <Border Grid.Row="1" x:Name="FindBar" Visibility="Collapsed"
+                    Background="{DynamicResource Panel.BackgroundAlt}"
+                    BorderBrush="{DynamicResource Border.Color}" BorderThickness="0,0,0,1"
+                    Padding="8,4">
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="✕" BorderThickness="0" Background="Transparent"
+                            Click="OnFindBarClose"/>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="查找:" VerticalAlignment="Center"/>
+                        <TextBox x:Name="FindTextBox" Width="220" Margin="4,0"
+                                 Text="{Binding FindText, UpdateSourceTrigger=PropertyChanged}"
+                                 KeyDown="OnFindTextBoxKeyDown"/>
+                        <Button Content="上一个" Command="{Binding FindPrevCommand}" Margin="4,0"/>
+                        <Button Content="下一个" Command="{Binding FindNextCommand}" Margin="4,0"/>
+                        <CheckBox Content="区分大小写" IsChecked="{Binding MatchCase}" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                        <CheckBox Content="全字匹配" IsChecked="{Binding WholeWord}" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                        <CheckBox Content="正则" IsChecked="{Binding UseRegex}" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="替换:" VerticalAlignment="Center" Margin="14,0,0,0"/>
+                        <TextBox Width="220" Margin="4,0"
+                                 Text="{Binding ReplaceText, UpdateSourceTrigger=PropertyChanged}"/>
+                        <Button Content="替换" Command="{Binding ReplaceNextCommand}" Margin="4,0"/>
+                        <Button Content="全部替换" Command="{Binding ReplaceAllCommand}" Margin="4,0"/>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- 编辑器宿主：激活标签的 TextEditor 实例整体放入 -->
+            <Border Grid.Row="2">
+                <ContentControl x:Name="EditorHost"/>
+            </Border>
+        </Grid>
+    </DockPanel>
+</Window>
