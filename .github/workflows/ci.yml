@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - '**/*.cs'
+      - '**/*.csproj'
+      - '**/*.xaml'
+      - '**/*.xshd'
+      - '**/*.slnx'
+      - 'Directory.Build.props'
+      - '.github/workflows/**'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - '**/*.cs'
+      - '**/*.csproj'
+      - '**/*.xaml'
+      - '**/*.xshd'
+      - '**/*.slnx'
+      - 'Directory.Build.props'
+      - '.github/workflows/**'
+
+# 同一分支的新提交会取消旧的正在运行的 CI，节省额度
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Format / Build / Test
+    runs-on: windows-latest
+
+    # 三步串行跑在同一 job 内：本仓库体量小，拆 job 的并行收益
+    # 抵不过重复 checkout 与 restore 的开销。
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      # 缓存 NuGet 全局包目录，键基于 csproj 内容哈希；
+      # 依赖未变时直接命中缓存，跳过重复下载。
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore
+        run: dotnet restore
+
+      # 不引入 .editorconfig，采用 dotnet format 的默认风格；
+      # 规则随之绑定在 CI 的 SDK 版本上，本地版本不一致时以 CI 为准。
+      - name: Format check
+        run: dotnet format AiPromptMarkdownEditor.slnx --verify-no-changes --no-restore
+
+      # 将警告视为错误，避免提交带警告的代码
+      - name: Build
+        run: dotnet build AiPromptMarkdownEditor.slnx --no-restore -c Release -warnaserror
+
+      - name: Test
+        run: dotnet test tests/PromptEditorLib.Tests -c Release --no-build
