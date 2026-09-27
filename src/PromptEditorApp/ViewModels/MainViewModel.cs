@@ -59,9 +59,6 @@ public sealed class MainViewModel : ObservableObject
     /// <summary>激活标签已切换（MainWindow 把对应编辑器实例放入内容宿主）。</summary>
     public event Action<DocumentViewModel?>? ActiveEditorChanged;
 
-    /// <summary>大纲/结构刷新请求。</summary>
-    public event Action<DocumentViewModel?>? StructureRefreshRequested;
-
     public ObservableCollection<OutlineRow> OutlineItems { get; } = new();
 
     // ---------- 标签库 ----------
@@ -198,10 +195,9 @@ public sealed class MainViewModel : ObservableObject
         }
     }
 
-    /// <summary>查找栏显隐与窗口关闭（MainWindow 订阅）。</summary>
+    /// <summary>查找栏显隐（MainWindow 订阅）。</summary>
     public event Action? ShowFindBar;
     public event Action? HideFindBar;
-    public event Action? CloseWindow;
 
     private readonly List<(int Start, int Length)> _currentMatches = new();
     private int _currentMatchIndex = -1;
@@ -292,13 +288,22 @@ public sealed class MainViewModel : ObservableObject
     public RelayCommand ToggleFoldCommand => FoldToggleCommand;
     public RelayCommand TagPickerCommand { get; }
 
-    private void ApplyHeading(int level) => EditorOps.ApplyHeadingLevel(ActiveDocument, level);
-    private void ApplyBold() => EditorOps.ToggleInlineMarker(ActiveDocument, "**");
-    private void ApplyInlineMarker(string marker) => EditorOps.ToggleInlineMarker(ActiveDocument, marker);
-    private void ApplyCodeBlock() => EditorOps.ToggleCodeBlock(ActiveDocument);
-    private void ApplyQuote() => EditorOps.ToggleQuote(ActiveDocument);
-    private void ApplyUnorderedList() => EditorOps.ToggleUnorderedList(ActiveDocument);
-    private void ApplyOrderedList() => EditorOps.ToggleOrderedList(ActiveDocument);
+    /// <summary>
+    /// 把编辑操作挂到当前激活文档上。ActiveDocument 有 public setter 供标签栏
+    /// 双向绑定，列表清空选区时会短暂为 null，故统一在此拦截。
+    /// </summary>
+    private void WithActiveDoc(Action<DocumentViewModel> op)
+    {
+        if (ActiveDocument is not null) op(ActiveDocument);
+    }
+
+    private void ApplyHeading(int level) => WithActiveDoc(d => EditorOps.ApplyHeadingLevel(d, level));
+    private void ApplyBold() => WithActiveDoc(d => EditorOps.ToggleInlineMarker(d, "**"));
+    private void ApplyInlineMarker(string marker) => WithActiveDoc(d => EditorOps.ToggleInlineMarker(d, marker));
+    private void ApplyCodeBlock() => WithActiveDoc(EditorOps.ToggleCodeBlock);
+    private void ApplyQuote() => WithActiveDoc(EditorOps.ToggleQuote);
+    private void ApplyUnorderedList() => WithActiveDoc(EditorOps.ToggleUnorderedList);
+    private void ApplyOrderedList() => WithActiveDoc(EditorOps.ToggleOrderedList);
 
     private void ShowTagPicker()
     {

@@ -25,7 +25,6 @@ public partial class MainWindow : Window
         _vm.Tabs.CollectionChanged += OnTabsChanged;
         _vm.ShowFindBar += () => { FindBar.Visibility = Visibility.Visible; FindTextBox.Focus(); };
         _vm.HideFindBar += () => FindBar.Visibility = Visibility.Collapsed;
-        _vm.CloseWindow += Close;
 
         // 恢复窗口状态
         var s = App.Settings;

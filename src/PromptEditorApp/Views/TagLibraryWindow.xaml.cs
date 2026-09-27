@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using Microsoft.Win32;
@@ -17,15 +16,17 @@ public partial class TagLibraryWindow : Window
 
     public ObservableCollection<TagRow> Rows { get; } = new();
 
-    public sealed class TagRow : INotifyPropertyChanged
+    /// <summary>
+    /// 数据行。由 DataGrid 双向绑定直接改写属性，代码侧只在增删时操作
+    /// 集合本身，不就地改已有行，因此无需 INotifyPropertyChanged。
+    /// </summary>
+    public sealed class TagRow
     {
         public string Name { get; set; } = "";
         public string StartTag { get; set; } = "";
         public string EndTag { get; set; } = "";
         public string WrapModeText { get; set; } = "Block";
         public bool IsPinned { get; set; }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
 
         public static TagRow From(TagDefinition t) => new()
         {
