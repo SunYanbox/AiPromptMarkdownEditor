@@ -1,0 +1,22 @@
+<Window x:Class="PromptEditor.Views.UnsavedFilesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="未保存的文档" Width="480" SizeToContent="Height"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        Background="{DynamicResource Panel.Background}">
+    <StackPanel Margin="16">
+        <TextBlock Text="以下文档有未保存的修改：" Margin="0,0,0,8" TextWrapping="Wrap"/>
+        <Border BorderBrush="{DynamicResource Border.Color}" BorderThickness="1" Padding="8" MaxHeight="220">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ItemsControl x:Name="FilesList"/>
+            </ScrollViewer>
+        </Border>
+        <TextBlock Text="「全部放弃」将丢失这些文档的所有未保存修改。"
+                   Foreground="{DynamicResource Warning}" Margin="0,8,0,0" TextWrapping="Wrap"/>
+        <UniformGrid Columns="3" Margin="0,12,0,0">
+            <Button Content="全部保存" Click="OnSaveAll" Margin="0,0,4,0"/>
+            <Button Content="全部放弃" Click="OnDiscardAll" Margin="4,0"/>
+            <Button Content="取消" Click="OnCancel" Margin="4,0,0,0" IsCancel="True"/>
+        </UniformGrid>
+    </StackPanel>
+</Window>

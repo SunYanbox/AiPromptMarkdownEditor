@@ -1,0 +1,15 @@
+<Window x:Class="PromptEditor.Views.GotoLineWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="跳转到行" Width="320" SizeToContent="Height"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        Background="{DynamicResource Panel.Background}">
+    <StackPanel Margin="16">
+        <TextBlock x:Name="HintText" Text="行号 (1 - 1)：" Margin="0,0,0,6"/>
+        <TextBox x:Name="LineBox" Margin="0,0,0,12"/>
+        <UniformGrid Columns="2">
+            <Button Content="跳转" Click="OnGo" Margin="0,0,4,0" IsDefault="True"/>
+            <Button Content="取消" Click="OnCancel" Margin="4,0,0,0" IsCancel="True"/>
+        </UniformGrid>
+    </StackPanel>
+</Window>

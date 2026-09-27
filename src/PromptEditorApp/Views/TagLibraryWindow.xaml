@@ -1,0 +1,41 @@
+<Window x:Class="PromptEditor.Views.TagLibraryWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        Title="标签库管理" Width="760" Height="480"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource Panel.Background}">
+    <DockPanel Margin="12">
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,10,0,0">
+            <Button Content="新增" Click="OnAdd" Width="70" Margin="0,0,6,0"/>
+            <Button Content="删除" Click="OnDelete" Width="70" Margin="0,0,6,0"/>
+            <Button Content="恢复默认预设" Click="OnRestoreDefaults" Width="100" Margin="0,0,6,0"/>
+            <Button Content="导入…" Click="OnImport" Width="70" Margin="0,0,6,0"/>
+            <Button Content="导出…" Click="OnExport" Width="70" Margin="0,0,6,0"/>
+            <Separator Width="10"/>
+            <Button Content="保存" Click="OnSave" Width="70" Margin="0,0,6,0" IsDefault="True"/>
+            <Button Content="取消" Click="OnCancel" Width="70" IsCancel="True"/>
+        </StackPanel>
+        <TextBlock DockPanel.Dock="Top" TextWrapping="Wrap" Margin="0,0,0,8"
+                   Foreground="{DynamicResource Text.Secondary}"
+                   Text="短名唯一且非空；开始/结束标签非空且互不相等；开始标签与其他标签重复时允许保存但会提示歧义。修改不影响已打开文档的文本。"/>
+        <DataGrid x:Name="Grid" AutoGenerateColumns="False" CanUserAddRows="False"
+                  HeadersVisibility="Column" SelectionMode="Single">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="短名" Binding="{Binding Name}" Width="140"/>
+                <DataGridTextColumn Header="开始标签" Binding="{Binding StartTag}" Width="180"/>
+                <DataGridTextColumn Header="结束标签" Binding="{Binding EndTag}" Width="180"/>
+                <DataGridComboBoxColumn x:Name="WrapModeColumn" Header="包裹方式" Width="90"
+                                        SelectedItemBinding="{Binding WrapModeText}">
+                    <DataGridComboBoxColumn.ItemsSource>
+                        <x:Array Type="sys:String">
+                            <sys:String>Block</sys:String>
+                            <sys:String>Inline</sys:String>
+                        </x:Array>
+                    </DataGridComboBoxColumn.ItemsSource>
+                </DataGridComboBoxColumn>
+                <DataGridCheckBoxColumn Header="置顶" Binding="{Binding IsPinned}" Width="60"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</Window>
