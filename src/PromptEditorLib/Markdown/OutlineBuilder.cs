@@ -24,23 +24,26 @@ public static class OutlineBuilder
 
     public static List<OutlineItem> Build(string markdown, IReadOnlyList<TagDefinition> tags)
     {
+        // 参数声明为非空，但保留对 null 的容忍；归一化到局部变量，
+        // 避免可空流分析把后续使用判定为可能为 null。
+        var md = markdown ?? "";
         var items = new List<OutlineItem>();
 
         // 标题：仅取文档顶层块（不递归进入引用/列表内部）
-        var doc = Markdig.Markdown.Parse(markdown ?? "", Pipeline);
+        var doc = Markdig.Markdown.Parse(md, Pipeline);
         foreach (var block in doc)
         {
             if (block is HeadingBlock h && h.Line >= 0)
             {
-                string text = ExtractHeadingText(markdown, h);
+                string text = ExtractHeadingText(md, h);
                 items.Add(new OutlineItem(h.Line, h.Level, text, IsTag: false, TagName: ""));
             }
         }
 
         // 顶层标签：行首（允许前导空白）以某开始标签开头的行
-        if (tags.Count > 0 && !string.IsNullOrEmpty(markdown))
+        if (tags.Count > 0 && !string.IsNullOrEmpty(md))
         {
-            var lines = markdown.Split('\n');
+            var lines = md.Split('\n');
             for (int i = 0; i < lines.Length; i++)
             {
                 var trimmed = lines[i].TrimStart();
