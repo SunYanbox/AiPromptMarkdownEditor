@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/PromptEditorApp/PromptEditorApp.csproj" />
+    <Project Path="src/PromptEditorLib/PromptEditorLib.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/PromptEditorLib.Tests/PromptEditorLib.Tests.csproj" />
+  </Folder>
+</Solution>

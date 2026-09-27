@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <!-- 允许在非 Windows 平台 CI 环境编译 WPF 项目；运行仍需 Windows -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <RootNamespace>PromptEditor</RootNamespace>
+    <AssemblyName>PromptEditor</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <!--
+    NuGet 依赖说明（刻意保持最少）：
+    - AvalonEdit（ICSharpCode.AvalonEdit 6.x 起的官方包 ID）：文本编辑核心
+      （行号、语法高亮、折叠、大文本性能），需求固定选型
+    -->
+  <ItemGroup>
+    <PackageReference Include="AvalonEdit" Version="6.3.1.120" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PromptEditorLib\PromptEditorLib.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Themes\MarkdownDark.xshd" />
+    <EmbeddedResource Include="Themes\MarkdownLight.xshd" />
+  </ItemGroup>
+
+</Project>

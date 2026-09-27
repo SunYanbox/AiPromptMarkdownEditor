@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>PromptEditorLib</RootNamespace>
+    <Description>AI 提示词 Markdown 编辑器纯逻辑库：标签配对、行尾处理、折叠计算、表格/列表/标题操作、同名消歧等</Description>
+  </PropertyGroup>
+
+  <!-- Markdig：Markdown 解析（大纲提取 / 结构分析），仅此一个运行时依赖 -->
+  <ItemGroup>
+    <PackageReference Include="Markdig" Version="0.41.3" />
+  </ItemGroup>
+
+</Project>
