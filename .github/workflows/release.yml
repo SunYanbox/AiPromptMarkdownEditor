@@ -1,0 +1,90 @@
+name: Release
+
+on:
+  release:
+    types: [published] # 只在 Release 被发布时触发（不覆盖草稿）
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Publish assets
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          # release 事件的默认 ref 即该标签，显式写出避免歧义：
+          # 发布产物必须来自被打标签的那个提交。
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore
+        run: dotnet restore
+
+      # 发布闸门：标签未必指向跑过 CI 的提交，产物出厂前过一遍。
+      - name: Test
+        run: dotnet test tests/PromptEditorLib.Tests -c Release
+
+      # ---------- 不内置 Runtime（默认名称，体积最小，需预装 .NET 10 桌面运行时）----------
+      # 用默认 exe 名的即此产物：托管程序集全部打进 exe，解压后只有一个可执行文件。
+      - name: Publish framework-dependent
+        run: >
+          dotnet publish src/PromptEditorApp/PromptEditorApp.csproj
+          -c Release
+          -r win-x64
+          --self-contained false
+          -p:PublishSingleFile=true
+          -warnaserror
+          -o publish/framework-dependent
+
+      # ---------- 内置 Runtime（自包含）----------
+      # 这里刻意不做单文件：自包含 + WPF 时原生库（wpfgfx_cor3、PresentationNative_cor3
+      # 等）默认不打进 bundle，要么散落在 exe 旁边、要么靠
+      # IncludeNativeLibrariesForSelfExtract 在首次运行时释放到临时目录。
+      # 前者凑不齐「一个可执行文件」，后者首次启动更慢且容易触发安全软件扫描，
+      # 因此改用完整目录发布后打包成 zip，产物确定性最高。
+      - name: Publish self-contained
+        run: >
+          dotnet publish src/PromptEditorApp/PromptEditorApp.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          -warnaserror
+          -o publish/PromptEditor-selfcontained
+
+      # 压缩整个目录，使 zip 内以 PromptEditor-selfcontained/ 为根，
+      # 用户解压后不会把两百余个文件散在当前目录。
+      - name: Bundle self-contained into zip
+        shell: pwsh
+        run: >
+          Compress-Archive
+          -Path publish/PromptEditor-selfcontained
+          -DestinationPath publish/PromptEditor-selfcontained.zip
+          -CompressionLevel Optimal
+
+      # 符号文件（.pdb）在部分发布配置下可能不生成，
+      # fail_on_unmatched_files 关闭以免因此中断发布。
+      - name: Upload assets to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          fail_on_unmatched_files: false
+          files: |
+            publish/framework-dependent/PromptEditor.exe
+            publish/framework-dependent/PromptEditor.pdb
+            publish/PromptEditor-selfcontained.zip
