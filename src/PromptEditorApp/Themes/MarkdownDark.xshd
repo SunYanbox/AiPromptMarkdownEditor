@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<SyntaxDefinition name="Markdown" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
+  <!-- Markdown 语法高亮（深色主题配色） -->
+  <Color name="Heading" foreground="#569CD6" fontWeight="bold"/>
+  <Color name="Bold" foreground="#CE9178" fontWeight="bold"/>
+  <Color name="Italic" foreground="#CE9178" fontStyle="italic"/>
+  <Color name="Strike" foreground="#808080"/>
+  <Color name="CodeBlock" foreground="#6A9955"/>
+  <Color name="InlineCode" foreground="#4EC9B0"/>
+  <Color name="Quote" foreground="#6A9955" fontStyle="italic"/>
+  <Color name="Link" foreground="#3794FF" underline="true"/>
+  <Color name="ListItem" foreground="#DCDCAA"/>
+  <Color name="TagBlock" foreground="#C586C0"/>
+
+  <RuleSet>
+    <!-- 围栏代码块 -->
+    <Span color="CodeBlock" multiline="true">
+      <Begin>^\s*```</Begin>
+      <End>^\s*```</End>
+    </Span>
+    <!-- 标题 -->
+    <Rule color="Heading">^\s{0,3}[#]{1,6}[^\n]*</Rule>
+    <!-- 引用 -->
+    <Rule color="Quote">^\s*&gt;[^\n]*</Rule>
+    <!-- 列表标记 -->
+    <Rule color="ListItem">^\s*([-*+]|\d+\.)\s</Rule>
+    <!-- 行内代码 -->
+    <Rule color="InlineCode">`[^`\n]+`</Rule>
+    <!-- 链接 / 图片 -->
+    <Rule color="Link">\[?[^\[\]\n]*\]\([^)\n]*\)</Rule>
+    <!-- 加粗 / 删除线 / 斜体 -->
+    <Rule color="Strike">~~[^~\n]+~~</Rule>
+    <Rule color="Bold">\*\*[^*\n]+\*\*</Rule>
+    <Rule color="Italic">\*[^*\n]+\*</Rule>
+    <!-- 标签块（如 &lt;system&gt;） -->
+    <Rule color="TagBlock">&lt;/?[A-Za-z_][A-Za-z0-9_]*&gt;</Rule>
+  </RuleSet>
+</SyntaxDefinition>

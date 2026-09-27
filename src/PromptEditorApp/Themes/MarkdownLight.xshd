@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<SyntaxDefinition name="Markdown" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
+  <!-- Markdown 语法高亮（浅色主题配色） -->
+  <Color name="Heading" foreground="#0550AE" fontWeight="bold"/>
+  <Color name="Bold" foreground="#953800" fontWeight="bold"/>
+  <Color name="Italic" foreground="#953800" fontStyle="italic"/>
+  <Color name="Strike" foreground="#6E7781"/>
+  <Color name="CodeBlock" foreground="#116329"/>
+  <Color name="InlineCode" foreground="#0A7C5A"/>
+  <Color name="Quote" foreground="#116329" fontStyle="italic"/>
+  <Color name="Link" foreground="#0A3069" underline="true"/>
+  <Color name="ListItem" foreground="#7D4E00"/>
+  <Color name="TagBlock" foreground="#8250DF"/>
+
+  <RuleSet>
+    <Span color="CodeBlock" multiline="true">
+      <Begin>^\s*```</Begin>
+      <End>^\s*```</End>
+    </Span>
+    <Rule color="Heading">^\s{0,3}[#]{1,6}[^\n]*</Rule>
+    <Rule color="Quote">^\s*&gt;[^\n]*</Rule>
+    <Rule color="ListItem">^\s*([-*+]|\d+\.)\s</Rule>
+    <Rule color="InlineCode">`[^`\n]+`</Rule>
+    <Rule color="Link">\[?[^\[\]\n]*\]\([^)\n]*\)</Rule>
+    <Rule color="Strike">~~[^~\n]+~~</Rule>
+    <Rule color="Bold">\*\*[^*\n]+\*\*</Rule>
+    <Rule color="Italic">\*[^*\n]+\*</Rule>
+    <Rule color="TagBlock">&lt;/?[A-Za-z_][A-Za-z0-9_]*&gt;</Rule>
+  </RuleSet>
+</SyntaxDefinition>
