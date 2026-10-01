@@ -309,7 +309,11 @@ public sealed class MainViewModel : ObservableObject
     {
         if (ActiveDocument is null) return;
         var dlg = new Views.TagPickerWindow(TagLibrary) { Owner = Application.Current.MainWindow };
-        if (dlg.ShowDialog() == true && dlg.SelectedTag is not null)
+        var dialogResult = dlg.ShowDialog();
+        // 标签库在「更多标签…」窗口内被修改过时，无论是否应用了标签都要持久化
+        if (dlg.LibraryUpdated && dlg.UpdatedLibrary is not null)
+            SaveTagLibrary(dlg.UpdatedLibrary);
+        if (dialogResult == true && dlg.SelectedTag is not null)
         {
             EditorOps.WrapWithTag(ActiveDocument, dlg.SelectedTag);
         }

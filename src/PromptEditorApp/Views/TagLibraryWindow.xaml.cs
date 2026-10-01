@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows;
+using System.Windows.Controls;
 using Microsoft.Win32;
 using PromptEditorLib.Tags;
 
@@ -138,6 +139,9 @@ public partial class TagLibraryWindow : Window
 
     private void OnSave(object sender, RoutedEventArgs e)
     {
+        // 提交 DataGrid 中尚未确认的单元格编辑（直接点保存时防止丢字）
+        Grid.CommitEdit(DataGridEditingUnit.Row, true);
+
         var lib = BuildLibrary();
         var validation = lib.Validate();
         if (validation.HasErrors)

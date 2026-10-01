@@ -214,3 +214,74 @@ public class TagLibraryValidationTests
         Assert.Equal(lib.Tags[0].StartTag, restored.Tags[0].StartTag);
     }
 }
+
+public class TagLibraryPersistenceTests : IDisposable
+{
+    private readonly string _dir;
+    private readonly string _path;
+
+    public TagLibraryPersistenceTests()
+    {
+        _dir = Path.Combine(Path.GetTempPath(), "taglib-tests-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(_dir);
+        _path = Path.Combine(_dir, "tags.json");
+    }
+
+    public void Dispose()
+    {
+        try { Directory.Delete(_dir, recursive: true); } catch { /* 忽略 */ }
+    }
+
+    private static TagLibrary Sample() => new()
+    {
+        Tags =
+        [
+            new TagDefinition("alpha", "<a>", "</a>", TagWrapMode.Block),
+            new TagDefinition("beta", "<b>", "</b>", TagWrapMode.Inline),
+        ]
+    };
+
+    [Fact]
+    public void Save_Then_Load_PreservesAddDeleteUpdate()
+    {
+        // 保存 → 载入一致
+        Sample().Save(_path);
+        var loaded = TagLibrary.Load(_path);
+        Assert.Equal(2, loaded.Tags.Count);
+
+        // 新增
+        var modified = new TagLibrary { Tags = [.. loaded.Tags, new TagDefinition("gamma", "<g>", "</g>", TagWrapMode.Block)] };
+        modified.Save(_path);
+        loaded = TagLibrary.Load(_path);
+        Assert.Equal(3, loaded.Tags.Count);
+        Assert.Contains(loaded.Tags, t => t.Name == "gamma");
+
+        // 删除
+        modified = new TagLibrary { Tags = loaded.Tags.Where(t => t.Name != "alpha").ToList() };
+        modified.Save(_path);
+        loaded = TagLibrary.Load(_path);
+        Assert.Equal(2, loaded.Tags.Count);
+        Assert.DoesNotContain(loaded.Tags, t => t.Name == "alpha");
+
+        // 修改
+        modified = new TagLibrary
+        {
+            Tags = loaded.Tags.Select(t => t.Name == "beta"
+                ? new TagDefinition("beta", "<beta>", "</beta>", TagWrapMode.Block, t.IsPinned)
+                : t).ToList()
+        };
+        modified.Save(_path);
+        loaded = TagLibrary.Load(_path);
+        var beta = Assert.Single(loaded.Tags, t => t.Name == "beta");
+        Assert.Equal("<beta>", beta.StartTag);
+        Assert.Equal(TagWrapMode.Block, beta.WrapMode);
+    }
+
+    [Fact]
+    void Save_CreatesMissingDirectory()
+    {
+        var deep = Path.Combine(_dir, "sub", "dir", "tags.json");
+        Sample().Save(deep);
+        Assert.True(File.Exists(deep));
+    }
+}
