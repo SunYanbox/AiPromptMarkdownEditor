@@ -76,7 +76,9 @@
                                         <Border Background="{DynamicResource Panel.Background}"
                                                 BorderBrush="{DynamicResource Border.Color}" BorderThickness="1"
                                                 Padding="2" MinWidth="180" Margin="0,1,4,4">
-                                            <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                                            <ScrollViewer MaxHeight="320" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                                <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                                            </ScrollViewer>
                                         </Border>
                                     </Popup>
                                 </Grid>
@@ -222,10 +224,15 @@
                                               Background="{DynamicResource Editor.Background}"
                                               BorderBrush="{DynamicResource Border.Color}" BorderThickness="1"
                                               IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"/>
-                                <ContentPresenter Margin="6,2,24,2" VerticalAlignment="Center" IsHitTestVisible="False"
+                                <ContentPresenter x:Name="ContentPresenter" Margin="6,2,24,2" VerticalAlignment="Center" IsHitTestVisible="False"
                                                   Content="{TemplateBinding SelectionBoxItem}"
                                                   ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
                                                   ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"/>
+                                <!-- 可编辑模式的文本框（IsEditable=True 时显示，如工具栏标签过滤框） -->
+                                <TextBox x:Name="PART_EditableTextBox" Margin="6,1,24,1" Padding="0" VerticalAlignment="Center"
+                                         Visibility="Collapsed" Background="Transparent" BorderThickness="0"
+                                         CaretBrush="{DynamicResource Text.Primary}" IsReadOnly="{TemplateBinding IsReadOnly}"
+                                         Text="{Binding Text, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                                 <Path Data="M 0,0 L 4,4 L 8,0" SnapsToDevicePixels="False"
                                       HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,7,0"
                                       Fill="{DynamicResource Text.Primary}" IsHitTestVisible="False"/>
@@ -241,6 +248,10 @@
                                 </Popup>
                             </Grid>
                             <ControlTemplate.Triggers>
+                                <Trigger Property="IsEditable" Value="True">
+                                    <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible"/>
+                                    <Setter TargetName="ContentPresenter" Property="Visibility" Value="Collapsed"/>
+                                </Trigger>
                                 <Trigger Property="IsDropDownOpen" Value="True">
                                     <Setter TargetName="Toggle" Property="Background" Value="{DynamicResource Item.Hover}"/>
                                 </Trigger>

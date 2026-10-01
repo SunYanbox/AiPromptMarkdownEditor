@@ -108,9 +108,10 @@
                     <Separator/>
                     <TextBlock Text="标签:" VerticalAlignment="Center" Margin="4,0"/>
                     <ComboBox x:Name="QuickTagCombo" Width="170"
-                              ItemsSource="{Binding QuickTags}"
+                              IsEditable="True" IsTextSearchEnabled="False" StaysOpenOnEdit="True"
                               DisplayMemberPath="Name"
-                              SelectionChanged="OnQuickTagSelected"/>
+                              SelectionChanged="OnQuickTagSelected"
+                              ToolTip="输入以过滤标签短名，回车应用选中项"/>
                     <Button Content="更多标签…" Command="{Binding TagPickerCommand}"/>
                     <Separator/>
                     <Button Content="表格" Click="OnTableButton"/>

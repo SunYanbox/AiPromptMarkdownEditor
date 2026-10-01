@@ -25,6 +25,7 @@ public partial class MainWindow : Window
         _vm.Tabs.CollectionChanged += OnTabsChanged;
         _vm.ShowFindBar += () => { FindBar.Visibility = Visibility.Visible; FindTextBox.Focus(); };
         _vm.HideFindBar += () => FindBar.Visibility = Visibility.Collapsed;
+        InitQuickTagCombo();
 
         // 恢复窗口状态
         var s = App.Settings;
@@ -107,21 +108,73 @@ public partial class MainWindow : Window
         menu.Items.Add(MenuItemOf("引用  > ", _vm.QuoteCommand));
         menu.Items.Add(new Separator());
 
+        // ===== 外围标签子菜单：顶部过滤输入框 + 过滤后的标签短名列表（超长可滚动） =====
         var tags = new MenuItem { Header = "外围标签" };
-        foreach (var tag in _vm.QuickTags)
+        var tagFilterBox = new TextBox { Width = 150, Margin = new Thickness(2, 3, 6, 3) };
+        var tagFilterItem = new MenuItem
         {
-            var t = tag;
-            tags.Items.Add(new MenuItem
+            // 内嵌输入框：点击输入框时子菜单保持打开
+            Header = new StackPanel
             {
-                Header = t.Name,
-                Command = new RelayCommand(() =>
+                Orientation = System.Windows.Controls.Orientation.Horizontal,
+                Children =
                 {
-                    if (_vm.ActiveDocument is not null) EditorOps.WrapWithTag(_vm.ActiveDocument, t);
-                })
-            });
+                    new TextBlock { Text = "标签：", VerticalAlignment = VerticalAlignment.Center },
+                    tagFilterBox,
+                },
+            },
+            Focusable = false,
+            StaysOpenOnClick = true,
+        };
+        tags.Items.Add(tagFilterItem);
+        tags.Items.Add(new Separator());
+
+        void RebuildTagMenuItems()
+        {
+            // 保留前两项（过滤框 + 分隔线），其余按过滤条件重建
+            for (int i = tags.Items.Count - 1; i >= 2; i--)
+                tags.Items.RemoveAt(i);
+
+            var text = (tagFilterBox.Text ?? "").Trim();
+            var filtered = string.IsNullOrEmpty(text)
+                ? _vm.QuickTags
+                : _vm.QuickTags.Where(t => t.Name.Contains(text, StringComparison.OrdinalIgnoreCase));
+
+            int count = 0;
+            foreach (var tag in filtered)
+            {
+                var t = tag;
+                tags.Items.Add(new MenuItem
+                {
+                    Header = t.Name,
+                    Command = new RelayCommand(() =>
+                    {
+                        if (_vm.ActiveDocument is not null) EditorOps.WrapWithTag(_vm.ActiveDocument, t);
+                    })
+                });
+                count++;
+            }
+            if (count == 0)
+                tags.Items.Add(new MenuItem { Header = "(无匹配标签)", IsEnabled = false });
         }
-        if (!_vm.QuickTags.Any())
-            tags.Items.Add(new MenuItem { Header = "(标签库为空)", IsEnabled = false });
+
+        RebuildTagMenuItems();
+        tagFilterBox.TextChanged += (_, _) => RebuildTagMenuItems();
+        // 输入框内按 ↓ 跳到第一个标签项
+        tagFilterBox.KeyDown += (_, e) =>
+        {
+            if (e.Key != Key.Down) return;
+            var first = tags.Items.OfType<MenuItem>().Skip(2).FirstOrDefault(i => i.IsEnabled);
+            first?.Focus();
+            e.Handled = true;
+        };
+        // 子菜单每次展开都重建（标签库可能已修改）并聚焦过滤框
+        tags.SubmenuOpened += (_, _) =>
+        {
+            tagFilterBox.Text = "";
+            RebuildTagMenuItems();
+            Dispatcher.BeginInvoke(DispatcherPriority.Input, () => tagFilterBox.Focus());
+        };
         menu.Items.Add(tags);
         menu.Items.Add(MenuItemOf("移除当前外围标签", _vm.RemoveTagCommand));
 
@@ -327,16 +380,47 @@ public partial class MainWindow : Window
 
     // ---------- 工具栏 ----------
 
+    // ---------- 工具栏：标签过滤选择 ----------
+
+    /// <summary>初始化工具栏标签下拉：可输入过滤（包含匹配，忽略大小写）。</summary>
+    private void InitQuickTagCombo()
+    {
+        QuickTagCombo.ItemsSource = _vm.QuickTags.ToList();
+        // 可编辑 ComboBox 的文本输入事件挂在内部 TextBox 上
+        QuickTagCombo.AddHandler(System.Windows.Controls.Primitives.TextBoxBase.TextChangedEvent,
+            new TextChangedEventHandler(OnQuickTagFilterChanged));
+        QuickTagCombo.DropDownOpened += (_, _) =>
+        {
+            // 无过滤词时恢复完整列表（标签库可能已修改）
+            if (string.IsNullOrWhiteSpace(QuickTagCombo.Text))
+                QuickTagCombo.ItemsSource = _vm.QuickTags.ToList();
+        };
+    }
+
+    private void OnQuickTagFilterChanged(object sender, TextChangedEventArgs e)
+    {
+        if (QuickTagCombo.ItemsSource is null) return;
+        var text = (QuickTagCombo.Text ?? "").Trim();
+        QuickTagCombo.ItemsSource = string.IsNullOrEmpty(text)
+            ? _vm.QuickTags.ToList()
+            : _vm.QuickTags.Where(t => t.Name.Contains(text, StringComparison.OrdinalIgnoreCase)).ToList();
+        // 输入时保持下拉展开，展示过滤结果
+        if (!QuickTagCombo.IsDropDownOpen)
+            QuickTagCombo.IsDropDownOpen = true;
+    }
+
     private void OnQuickTagSelected(object sender, SelectionChangedEventArgs e)
     {
         if (DataContext is not MainViewModel vm) return;
         if (sender is ComboBox { SelectedItem: PromptEditorLib.Tags.TagDefinition tag })
         {
-            // 触发包裹后还原选择，便于连续使用
+            // 触发包裹后清空过滤、还原完整列表，便于连续使用
             Dispatcher.BeginInvoke(() =>
             {
                 EditorOps.WrapWithTag(vm.ActiveDocument!, tag);
                 QuickTagCombo.SelectedItem = null;
+                QuickTagCombo.Text = "";
+                QuickTagCombo.ItemsSource = vm.QuickTags.ToList();
             });
         }
     }
